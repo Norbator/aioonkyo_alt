@@ -1,8 +1,8 @@
 [project]
-name = "aioonkyo"
-version = "0.4.0"
+name = "aioonkyo_alt"
+version = "0.4.0.post1"
 authors = [{ name = "Artur Pragacz" }]
-description = "A library for controlling Onkyo AV receivers."
+description = "Alternative distribution of aioonkyo, carrying extra ISCP commands."
 readme = "README.md"
 license = "GPL-3.0-only"
 license-files = ["LICEN[CS]E*"]
@@ -15,7 +15,8 @@ requires-python = ">=3.13"
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/arturpragacz/aioonkyo"
+Homepage = "https://github.com/VOTRE_COMPTE/aioonkyo_alt"
+Upstream = "https://github.com/arturpragacz/aioonkyo"
 
 [build-system]
 requires = ["hatchling"]
@@ -123,19 +124,19 @@ force-sort-within-sections = true
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"src/aioonkyo/export/**.py" = ["F401", "PLC0414", "TID252"]
-"src/aioonkyo/instruction.py" = ["D101", "D102", "D105", "UP040"]
-"src/aioonkyo/message.py" = ["D101", "D102", "D105"]
-"src/aioonkyo/message_code.py" = ["D101", "D105"]
-"src/aioonkyo/parameter.py" = ["D101", "D102", "D105"]
-"src/aioonkyo/status.py" = ["D101", "D102", "D105", "UP040"]
+"src/aioonkyo_alt/export/**.py" = ["F401", "PLC0414", "TID252"]
+"src/aioonkyo_alt/instruction.py" = ["D101", "D102", "D105", "UP040"]
+"src/aioonkyo_alt/message.py" = ["D101", "D102", "D105"]
+"src/aioonkyo_alt/message_code.py" = ["D101", "D105"]
+"src/aioonkyo_alt/parameter.py" = ["D101", "D102", "D105"]
+"src/aioonkyo_alt/status.py" = ["D101", "D102", "D105", "UP040"]
 
 [tool.ruff.lint.pycodestyle]
 max-line-length = 110
 
 [tool.mypy]
 # python_version = "3.13"
-packages = "aioonkyo"
+packages = "aioonkyo_alt"
 strict = true
 local_partial_types = true
 strict_bytes = true
