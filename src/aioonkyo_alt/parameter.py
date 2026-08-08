@@ -407,6 +407,10 @@ class VolumeParamNumeric(ParamNumeric):
     numeric_range = (0, 200)
 
 
+class DialogEnhancementParam(ParamNumeric):
+    numeric_range = (0, 5)
+
+
 class ToneParam(ParamNumeric):
     numeric_range = (-10, 10)
 

@@ -2,6 +2,7 @@
 
 from ...instruction import (
     ChannelMutingCommand as ChannelMuting,
+    DialogEnhancementCommand as DialogEnhancement,
     HDMIOutputCommand as HDMIOutput,
     InputSourceCommand as InputSource,
     ListeningModeCommand as ListeningMode,

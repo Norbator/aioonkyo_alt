@@ -10,6 +10,7 @@ from .message import CheckParamZonesMixin, KnownMessage, RawMessage
 from .message_code import Code, Kind, Zone
 from .parameter import (
     DestinationArea,
+    DialogEnhancementParam,
     HDMIOutputParam,
     InputSourceParam,
     ListeningModeParam,
@@ -93,6 +94,11 @@ class _NumericStatus(_KnownStatus):
 class VolumeStatus(_NumericStatus):
     kind: ClassVar[Kind] = Kind.VOLUME
     Param: TypeAlias = VolumeParamNumeric
+
+
+class DialogEnhancementStatus(_NumericStatus):
+    kind: ClassVar[Kind] = Kind.DIALOG_ENHANCEMENT
+    Param: TypeAlias = DialogEnhancementParam
 
 
 class TunerPresetStatus(_NumericStatus):
@@ -384,6 +390,7 @@ type ValidStatus = (
     | MutingStatus
     | InputSourceStatus
     | ListeningModeStatus
+    | DialogEnhancementStatus
     | HDMIOutputStatus
     | VolumeStatus
     | TunerPresetStatus

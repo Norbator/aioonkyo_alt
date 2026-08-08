@@ -6,6 +6,7 @@ from typing import ClassVar, TypeAlias, Unpack
 from .message import CheckParamZonesMixin, KnownMessage, RawMessage, ValidateKwargs
 from .message_code import Kind, Zone
 from .parameter import (
+    DialogEnhancementParam,
     HDMIOutputParam,
     InputSourceParam,
     ListeningModeParam,
@@ -81,6 +82,11 @@ class InputSourceQuery(_Query):
 @dataclass
 class ListeningModeQuery(_Query):
     kind: ClassVar[Kind] = Kind.LISTENING_MODE
+
+
+@dataclass
+class DialogEnhancementQuery(_MainZoneInstructionMixin, _Query):
+    kind: ClassVar[Kind] = Kind.DIALOG_ENHANCEMENT
 
 
 @dataclass
@@ -196,6 +202,20 @@ class VolumeCommand(_VolumeCommand):
     Param: TypeAlias = VolumeParamEnum
 
 
+# needs to be a dataclass because it inherits from two dataclasses
+@dataclass
+class DialogEnhancementCommand(_MainZoneInstructionMixin, _Instruction):
+    kind: ClassVar[Kind] = Kind.DIALOG_ENHANCEMENT
+
+    param: int
+
+    parameter: bytes = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.parameter = DialogEnhancementParam.from_numeric(self.param).raw
+        self._validate()
+
+
 @dataclass
 class TunerPresetCommand(_Instruction):
     kind: ClassVar[Kind] = Kind.TUNER_PRESET
@@ -276,6 +296,7 @@ type KnownQuery = (
     | ToneQuery
     | InputSourceQuery
     | ListeningModeQuery
+    | DialogEnhancementQuery
     | HDMIOutputQuery
     | AudioInformationQuery
     | VideoInformationQuery
@@ -290,6 +311,7 @@ type KnownCommand = (
     | MutingCommand
     | InputSourceCommand
     | ListeningModeCommand
+    | DialogEnhancementCommand
     | HDMIOutputCommand
     | TVOperationCommand
     | VolumeCommand

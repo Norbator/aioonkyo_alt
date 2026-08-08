@@ -3,6 +3,7 @@
 from ..status import (
     AudioInformationStatus as AudioInformation,
     ChannelMutingStatus as ChannelMuting,
+    DialogEnhancementStatus as DialogEnhancement,
     DiscoveryStatus as Discovery,
     FLDisplayStatus as FLDisplay,
     HDMIOutputStatus as HDMIOutput,

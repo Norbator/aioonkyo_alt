@@ -3,6 +3,7 @@
 from ...instruction import (
     AudioInformationQuery as AudioInformation,
     ChannelMutingQuery as ChannelMuting,
+    DialogEnhancementQuery as DialogEnhancement,
     DiscoveryQuery as Discovery,
     FLDisplayQuery as FLDisplay,
     HDMIOutputQuery as HDMIOutput,

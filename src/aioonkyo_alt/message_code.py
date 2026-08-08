@@ -29,6 +29,7 @@ class Kind(Enum):
     TONE = auto()
     INPUT_SOURCE = auto()
     LISTENING_MODE = auto()
+    DIALOG_ENHANCEMENT = auto()
     HDMI_OUTPUT = auto()
     AUDIO_INFORMATION = auto()
     VIDEO_INFORMATION = auto()
@@ -118,6 +119,8 @@ class Code(CodeBase):
     # LISTENING MODE
     LMD = Kind.LISTENING_MODE, Zone.MAIN
     LMZ = Kind.LISTENING_MODE, Zone.ZONE2
+    # DIALOG ENHANCEMENT (vocal accentuation level)
+    VOC = Kind.DIALOG_ENHANCEMENT, Zone.MAIN
     # HDMI OUTPUT
     HDO = Kind.HDMI_OUTPUT, Zone.MAIN
     # AUDIO INFORMATION
