@@ -15,7 +15,7 @@ requires-python = ">=3.13"
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/VOTRE_COMPTE/aioonkyo_alt"
+Homepage = "https://github.com/Norbator/aioonkyo_alt"
 Upstream = "https://github.com/arturpragacz/aioonkyo"
 
 [build-system]
