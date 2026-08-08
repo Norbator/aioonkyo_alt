@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/aioonkyo
+      url: https://pypi.org/p/aioonkyo-alt
     permissions:
       id-token: write # mandatory for trusted publishing
 
