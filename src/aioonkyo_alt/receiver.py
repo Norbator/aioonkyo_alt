@@ -8,7 +8,8 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 import logging
-from typing import TYPE_CHECKING, Final, Generic, Self, TypeVar
+import socket
+from typing import TYPE_CHECKING, Final, Generic, Protocol, Self, TypeVar
 
 from .common import BasicReceiverInfo, ReceiverInfo
 from .instruction import Instruction
@@ -25,6 +26,57 @@ _LOGGER = logging.getLogger(__name__)
 
 
 BROADCAST_ADDRESS: Final = "255.255.255.255"
+
+
+@dataclass(frozen=True, kw_only=True)
+class KeepAlive:
+    """TCP keepalive settings for the receiver connection.
+
+    A receiver whose network stack freezes does not close the connection: without
+    probes, an idle connection looks alive forever, and writes are retried by the
+    kernel for about 15 minutes before failing. With these settings, a silent
+    receiver is detected after about ``idle + interval * count`` seconds, both
+    while idle (keepalive probes) and after a write (``TCP_USER_TIMEOUT``).
+    """
+
+    idle: int = 30
+    """Seconds without traffic before the first probe."""
+    interval: int = 10
+    """Seconds between probes."""
+    count: int = 3
+    """Unanswered probes before the connection is considered dead."""
+
+    @property
+    def timeout(self) -> int:
+        """Seconds after which an unresponsive receiver is considered gone."""
+        return self.idle + self.interval * self.count
+
+
+DEFAULT_KEEPALIVE: Final = KeepAlive()
+
+
+class _SocketWithOptions(Protocol):
+    """Socket accepting options (``socket.socket`` or asyncio's transport socket)."""
+
+    def setsockopt(self, level: int, optname: int, value: int, /) -> None:
+        """Set a socket option."""
+
+
+def _apply_keepalive(sock: _SocketWithOptions, keepalive: KeepAlive) -> None:
+    """Enable TCP keepalive on the socket, with the options the platform supports."""
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+    # TCP_KEEPIDLE is named TCP_KEEPALIVE on macOS.
+    idle_option = getattr(socket, "TCP_KEEPIDLE", None) or getattr(socket, "TCP_KEEPALIVE", None)
+    options: list[tuple[int | None, int]] = [
+        (idle_option, keepalive.idle),
+        (getattr(socket, "TCP_KEEPINTVL", None), keepalive.interval),
+        (getattr(socket, "TCP_KEEPCNT", None), keepalive.count),
+        # Linux only: also bounds how long written data may stay unacknowledged.
+        (getattr(socket, "TCP_USER_TIMEOUT", None), keepalive.timeout * 1000),
+    ]
+    for option, value in options:
+        if option is not None:
+            sock.setsockopt(socket.IPPROTO_TCP, option, value)
 
 
 async def interview(
@@ -114,13 +166,13 @@ async def discover(
 InfoT = TypeVar("InfoT", bound=BasicReceiverInfo, default=ReceiverInfo)
 
 
-async def _connect_receiver_retry(info: InfoT) -> Receiver[InfoT]:
+async def _connect_receiver_retry(info: InfoT, keepalive: KeepAlive | None) -> Receiver[InfoT]:
     """Connect to the receiver, retrying on failure."""
     sleep_time = 10
     sleep_time_max = 180
     while True:
         try:
-            return await Receiver.open_connection(info)
+            return await Receiver.open_connection(info, keepalive=keepalive)
         except OSError:
             await asyncio.sleep(sleep_time)
             sleep_time = min(sleep_time * 2, sleep_time_max)
@@ -128,17 +180,24 @@ async def _connect_receiver_retry(info: InfoT) -> Receiver[InfoT]:
 
 @asynccontextmanager
 async def connect(
-    info: InfoT, *, retry: bool = False, run_queue: bool = False
+    info: InfoT,
+    *,
+    retry: bool = False,
+    run_queue: bool = False,
+    keepalive: KeepAlive | None = DEFAULT_KEEPALIVE,
 ) -> AsyncGenerator[Receiver[InfoT]]:
-    """Connect to the receiver."""
+    """Connect to the receiver.
+
+    ``keepalive=None`` disables TCP keepalive (behaviour of aioonkyo 0.4.0).
+    """
     _LOGGER.debug(
         "Async context manager connect (retry: %s, run_queue: %s): %s", retry, run_queue, info
     )
 
     if retry:
-        receiver = await _connect_receiver_retry(info)
+        receiver = await _connect_receiver_retry(info, keepalive)
     else:
-        receiver = await Receiver.open_connection(info)
+        receiver = await Receiver.open_connection(info, keepalive=keepalive)
 
     try:
         if run_queue:
@@ -173,10 +232,19 @@ class Receiver(Generic[InfoT]):
     _state: _ReceiverState = _ReceiverState.CONNECTED
 
     @classmethod
-    async def open_connection(cls, info: InfoT) -> Self:
+    async def open_connection(
+        cls, info: InfoT, *, keepalive: KeepAlive | None = DEFAULT_KEEPALIVE
+    ) -> Self:
         """Open connection to the receiver."""
         _LOGGER.debug("Connecting: %s", info)
         reader, writer = await asyncio.open_connection(info.host, info.port)
+        if keepalive is not None:
+            sock: _SocketWithOptions | None = writer.get_extra_info("socket")
+            if sock is not None:
+                try:
+                    _apply_keepalive(sock, keepalive)
+                except OSError as exc:
+                    _LOGGER.warning("Could not enable TCP keepalive (%s): %s", exc, info)
         _LOGGER.debug("Connected: %s", info)
         return cls(info, reader, writer)
 
@@ -303,6 +371,8 @@ class BasicReceiver(Receiver[BasicReceiverInfo]):
 
 
 __all__ = [
+    "KeepAlive",
+    "DEFAULT_KEEPALIVE",
     "interview",
     "discover",
     "connect",
